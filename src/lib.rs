@@ -509,6 +509,61 @@ impl RawBuffer {
         RawBuffer::new(mask, self.width, self.height, 1)
     }
 
+    /// flood fill algorithm using scanline technique
+    /// x,y is the seed position
+    pub fn flood_fill_to_mask_scanline(&self, x: u32, y: u32, fill_boundary_tolerance: f32) -> RawBuffer {
+        let mut mask = vec![0u8; self.width as usize * self.height as usize];
+        let original_color = self.get_pixel(x, y);
+    
+        let mask_value = 255u8;
+        let mut stack = vec![(x, y)];
+    
+        while let Some((x, y)) = stack.pop() {
+            let mut x1 = x as i32;
+            // Skip if already filled
+            if mask[(y * self.width + x as u32) as usize] == mask_value {
+                continue;
+            }
+            while x1 >= 0 && self.colors_within_tolerance(self.get_pixel(x1 as u32, y), original_color, fill_boundary_tolerance) {
+                x1 -= 1;
+            }
+            x1 += 1;
+    
+            let mut span_above = false;
+            let mut span_below = false;
+    
+            while x1 < self.width as i32 && self.colors_within_tolerance(self.get_pixel(x1 as u32, y), original_color, fill_boundary_tolerance) {
+                let index = (y * self.width + x1 as u32) as usize;
+                
+                // Skip if already filled
+                if mask[index] == mask_value {
+                    x1 += 1;
+                    continue;
+                }
+
+                mask[index] = mask_value;
+
+                if !span_above && y > 0 && self.colors_within_tolerance(self.get_pixel(x1 as u32, y - 1), original_color, fill_boundary_tolerance) {
+                    stack.push((x1 as u32, y - 1));
+                    span_above = true;
+                } else if span_above && y > 0 && !self.colors_within_tolerance(self.get_pixel(x1 as u32, y - 1), original_color, fill_boundary_tolerance) {
+                    span_above = false;
+                }
+
+                if !span_below && y < self.height - 1 && self.colors_within_tolerance(self.get_pixel(x1 as u32, y + 1), original_color, fill_boundary_tolerance) {
+                    stack.push((x1 as u32, y + 1));
+                    span_below = true;
+                } else if span_below && y < self.height - 1 && !self.colors_within_tolerance(self.get_pixel(x1 as u32, y + 1), original_color, fill_boundary_tolerance) {
+                    span_below = false;
+                }
+
+                x1 += 1;
+            }
+        }
+    
+        RawBuffer::new(mask, self.width, self.height, 1)
+    }
+
     fn colors_within_tolerance(&self, color1: Rgba<u8>, color2: Rgba<u8>, tolerance: f32) -> bool {
         let diff = color1
             .0

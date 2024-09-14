@@ -31,6 +31,23 @@ async fn run() {
         println!("flood fill time: {:?}", ts.elapsed());
         raw_buffer.save_as_image("output.png");
     }
+    {
+        let ts = std::time::Instant::now();
+        let mask = raw_buffer.flood_fill_to_mask(
+            texture_size.0 / 2,
+            texture_size.1 / 2,
+            0.01,
+        );
+        println!("flood fill to mask time: {:?}", ts.elapsed());
+        mask.save_as_image("output_mask.png");
+    }
+    // scanline flood fill
+    {
+        let ts = std::time::Instant::now();
+        let mask = raw_buffer.flood_fill_to_mask_scanline(texture_size.0 / 2, texture_size.1 / 2, 0.01);
+        println!("scanline flood fill time: {:?}", ts.elapsed());
+        mask.save_as_image("output_scanline.png");
+    }
 
     // {
     //     let ts = std::time::Instant::now();

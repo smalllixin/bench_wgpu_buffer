@@ -115,12 +115,23 @@ fn flood_fill_benchmark(c: &mut Criterion) {
         let raw_buffer = &raw_buffers[i];
         group.bench_function(
             &format!(
-                "generate_fill_mask_raw_{}x{}",
+                "4 way {}x{}",
                 texture_size.0, texture_size.1
             ),
             |b| {
                 b.iter(|| {
                     raw_buffer.flood_fill_to_mask(texture_size.0 / 2, texture_size.1 / 2, 0.01)
+                })
+            },
+        );
+        group.bench_function(
+            &format!(
+                "scanline {}x{}",
+                texture_size.0, texture_size.1
+            ),
+            |b| {
+                b.iter(|| {
+                    raw_buffer.flood_fill_to_mask_scanline(texture_size.0 / 2, texture_size.1 / 2, 0.01)
                 })
             },
         );
